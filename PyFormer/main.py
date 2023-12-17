@@ -1,8 +1,13 @@
 import pygame
+from pygame.color import Color
 from pygame.locals import *
 from pygame import Vector2
 from typing import Tuple, Dict, Optional, List
 import time
+
+from pygame.mask import Mask
+from pygame.rect import Rect
+
 
 SCREEN_SIZE = SCREEN_WIDTH, SCREEN_HEIGHT = 500, 500
 
@@ -13,82 +18,6 @@ CLEAR = pygame.color.Color(0, 0, 0, 0)
 
 
 pygame.init()
-
-
-class PlayerHitbox(pygame.sprite.Sprite):
-    def __init__(self, width: int, height: int, pos: Tuple[int, int], collision_list: List[pygame.mask.Mask], advanced_movement=False):
-        super().__init__()
-        self.surf = pygame.surface.Surface((width, height))
-        self.surf.fill(RED)
-        self.rect = self.surf.get_frect(center=pos)
-        self.mask = pygame.mask.Mask((width, height), fill=True)
-
-        self.keybinds = {
-            K_UP: self.up,
-            K_DOWN: self.down,
-            K_LEFT: self.left,
-            K_RIGHT: self.right
-        }
-
-        self.g = 10 # gravity
-        self.max_velocity = 100
-        self.jump_velocity = 20
-        self.velocity = Vector2()
-
-        self.advanced_movement = advanced_movement
-
-        self.collision_list = collision_list
-
-
-    def update(self, delta: float):
-        self.rect.center = pygame.mouse.get_pos()
-        # offset is incorrect, mask != screensize
-        print(self.collision_list[0].overlap(self.mask, self.rect.topleft))
-        # # call functions binded to keys
-        # keys = pygame.key.get_pressed()
-        # for k, v in self.keybinds.items():
-        #     if keys[k]:
-        #         v()
-        
-        # self.process(delta)
-        # self.move_and_collide()
-
-    # methods to call or bind to keys
-    # could be overidden maybe?
-    def up(self):
-        self.velocity.y = -self.jump_velocity*delta
-    def down(self):
-        pass
-    def left(self):
-        pass
-    def right(self):
-        pass
-    def process(self, delta: float):
-        """
-        Called every frame/every time update() is called. Default use is to handle gravity and friction
-        """
-        self.velocity.y += self.g*delta
-
-    def move_and_collide(self):
-        """
-        Moves self according to velocity set in update/process.  
-        Takes collision into account.
-        """
-        if self.velocity.length() != 0:
-            direction = self.velocity.normalize()
-            self.rect.move_ip(self.velocity)
-            for mask in self.collision_list:
-                while mask.overlap(self.mask, self.rect.topleft):
-                    self.rect.move_ip(-direction)
-
-   
-
-
-    def on_ground(self) -> bool:
-        pass
-
-
-
 
 
 def CollisionAreas_from_image(path: str, color_keys: Optional[Dict[str, pygame.color.Color]]=None, pos: Optional[Tuple[int, int]]=(0, 0)) -> List['CollisionArea']:
@@ -119,7 +48,7 @@ def CollisionAreas_from_image(path: str, color_keys: Optional[Dict[str, pygame.c
     return r
 
 
-class CollisionArea:
+class CollisionArea(pygame.sprite.Sprite):
     def __init__(self, name: str, rect: Optional[pygame.rect.Rect|Tuple[int, int]]=None, mask: Optional[pygame.mask.Mask]=None, pos: Optional[Tuple[int, int]]=(0, 0), width: Optional[int]=None, height: Optional[int]=None, debug_color: Optional[pygame.color.Color]=RED) -> None:
         """
         A class for detecting collisions.
@@ -147,6 +76,7 @@ class CollisionArea:
         - collide_with_several(other_CollisionAreas: List["CollisionArea"], use_mask=True) -> List["CollisionArea.name"]:
             Checks for collisions with multiple CollisionAreas and returns a list of names of collided CollisionAreas.
         """
+        super().__init__()
         if rect == None:
             if width != None and height != None:
                 self.rect = pygame.rect.Rect(pos[0], pos[1], width, height)
@@ -230,7 +160,18 @@ class CollisionArea:
         return r
 
 
+class Sprite(CollisionArea):
+    g = 10
+    def __init__(self, name: str, rect: Rect | Tuple[int, int] | None = None, mask: Mask | None = None, pos: Tuple[int, int] | None = (0, 0), width: int | None = None, height: int | None = None, debug_color: Color | None = RED) -> None:
+        super().__init__(name, rect, mask, pos, width, height, debug_color)
+    
+    def update(delta):
+        pass
 
+
+
+
+s = Sprite(name="s", height=60, width=10)
 
 
 screen = pygame.display.set_mode(SCREEN_SIZE)
